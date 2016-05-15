@@ -1,90 +1,120 @@
-// reset display handling
-var reset = false
-function resetDisplay () {
-  if (reset) {
-    reset = false
-    return $('#screen').val('')
+'use strict'
+
+var calculator = (function IIFE () {
+  var $variables = {}
+  var reset = false
+
+  function resetDisplay () {
+    if (reset) {
+      reset = false
+      $variables.output.val('')
+    }
   }
-}
 
-// clicking on numbers buttons
-$('.inputs').click(function () {
-  resetDisplay(reset)
-
-  if ($('#screen').val() === '0') {
-    $('#screen').val(this.innerHTML)
-  } else {
-    $('#screen').val($('#screen').val() + this.innerHTML)
+  function handleInput () {
+    resetDisplay()
+    if ($variables.output.val() === '0') {
+      $variables.output.val(this.innerHTML)
+    } else {
+      $variables.output.val($variables.output.val() + this.innerHTML)
+    }
   }
-})
 
-// clicking on a dot button
-$('#dot').click(function () {
-  resetDisplay(reset)
-
-  var screenValue = $('#screen').val()
-  switch (screenValue[screenValue.length - 1]) {
-    case undefined:
-    case '+':
-    case '-':
-    case '*':
-    case '/':
-    case '%':
-      $('#screen').val(screenValue + '0' + this.innerHTML)
-      break
-    default:
-      if (screenValue.indexOf(this.innerHTML) !== -1) {
-        if (screenValue.lastIndexOf(this.innerHTML) < screenValue.lastIndexOf('+') ||
-          screenValue.lastIndexOf(this.innerHTML) < screenValue.lastIndexOf('-') ||
-          screenValue.lastIndexOf(this.innerHTML) < screenValue.lastIndexOf('*') ||
-          screenValue.lastIndexOf(this.innerHTML) < screenValue.lastIndexOf('/') ||
-          screenValue.lastIndexOf(this.innerHTML) < screenValue.lastIndexOf('%')) {
-          $('#screen').val(screenValue + this.innerHTML)
+  function handleDot () {
+    resetDisplay()
+    var expression = $variables.output.val()
+    switch (expression[expression.length - 1]) {
+      case undefined:
+      case '+':
+      case '-':
+      case '*':
+      case '/':
+      case '%':
+        $variables.output.val(expression + '0' + this.innerHTML)
+        break
+      default:
+        if (expression.indexOf(this.innerHTML) === -1) {
+          $variables.output.val(expression + this.innerHTML)
+        } else if (expression.lastIndexOf(this.innerHTML) < expression.lastIndexOf('+') ||
+          expression.lastIndexOf(this.innerHTML) < expression.lastIndexOf('-') ||
+          expression.lastIndexOf(this.innerHTML) < expression.lastIndexOf('*') ||
+          expression.lastIndexOf(this.innerHTML) < expression.lastIndexOf('/') ||
+          expression.lastIndexOf(this.innerHTML) < expression.lastIndexOf('%')) {
+          $variables.output.val(expression + this.innerHTML)
         }
-      } else {
-        $('#screen').val(screenValue + this.innerHTML)
-      }
-  }
-})
-
-// clicking on an operation button
-$('.operations').click(function () {
-  if (reset) {
-    reset = !reset
+    }
   }
 
-  var screenValue = $('#screen').val()
-  switch (screenValue[screenValue.length - 1]) {
-    case undefined:
-      break
-    case '+':
-    case '-':
-    case '*':
-    case '/':
-    case '%':
-    case '.':
-      $('#screen').val(screenValue.slice(0, -1) + this.innerHTML)
-      break
-    default:
-      $('#screen').val(screenValue + this.innerHTML)
+  function handleOperation () {
+    if (reset) {
+      reset = !reset
+    }
+    var expression = $variables.output.val()
+    switch (expression[expression.length - 1]) {
+      case undefined:
+        break
+      case '+':
+      case '-':
+      case '*':
+      case '/':
+      case '%':
+      case '.':
+        $variables.output.val(expression.slice(0, -1) + this.innerHTML)
+        break
+      default:
+        $variables.output.val(expression + this.innerHTML)
+    }
   }
-})
 
-// clicking on equals button
-$('#result').click(function () {
-  $('#screen').val(eval($('#screen').val()))
-  reset = true
-})
-
-// Manual display reset
-$('#AC').click(function () {
-  $('#screen').val('')
-})
-
-$('#DEL').click(function () {
-  if ($('#screen').val().length > 1) {
-    $('#screen').val($('#screen').val().slice(0, -1))
-  } else {
-    $('#screen').val('')
+  function handleDelete () {
+    resetDisplay()
+    if($variables.output.val().length > 1) {
+      $variables.output.val($variables.output.val().slice(0, -1))
+    } else {
+      $variables.output.val('')
+    }
   }
+
+  function handleReset () {
+    resetDisplay()
+    $variables.output.val('')
+  }
+
+  function handleResult () {
+    $variables.output.val(eval($variables.output.val()))
+    reset = true
+  }
+
+  function init (options) {
+    $variables.output = $(options.output)
+    $variables.inputButtons = $(options.inputButtons)
+    $variables.dotButton = $(options.dotButton)
+    $variables.operationButtons = $(options.operationButtons)
+    $variables.deleteButton = $(options.deleteButton)
+    $variables.resetButton = $(options.resetButton)
+    $variables.resultButton = $(options.resultButton)
+
+    $variables.inputButtons.bind('click', handleInput)
+    $variables.operationButtons.bind('click', handleOperation)
+    $variables.dotButton.bind('click', handleDot)
+    $variables.deleteButton.bind('click', handleDelete)
+    $variables.resetButton.bind('click', handleReset)
+    $variables.resultButton.bind('click', handleResult)
+  }
+
+  return {
+    init: init
+  }
+}())
+
+$(document).ready(function () {
+  calculator.init({
+    output: '#screen',
+    inputButtons: '.input',
+    operationButtons: '.operation',
+    dotButton: '#dot',
+    deleteButton: '#delete',
+    resetButton: '#reset',
+    resultButton: '#result'
+  })
 })
